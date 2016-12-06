@@ -1,0 +1,24 @@
+# Get zfs binaries.
+apt install zfsutils-linux
+
+# Specify -f to override "does not contain an EFI label but it may contain
+# partition" error
+zpool create -f -O atime=off -O compression=lz4 banana raidz /dev/disk/by-id/ata-WDC_WD80EFZX-68UW8N0_{VKKR165Y,VKKSHA3Y,VKKTHTKY}
+
+# Create descendant filesystem.
+zfs create -o mountpoint=/mnt/raisin banana/raisin
+
+# Use parent filesystem only to establish properties for descendants. Don't
+# allow it to be mounted.
+zfs set canmount=off banana
+
+# Limit filesystem to 90% capacity. Performance degrades at >80% utilization.
+# Note that if the filesystem becomes full, it may become impossible to delete
+# files with ZFS. The canonical solution is to run "echo > /some/large/file" to
+# truncate an existing large file and free up enough space to permit deletions.
+zfs set quota=12.6T banana/raisin
+
+# Set up automatic scrub by running "crontab -e" and adding this line. Note
+# that full path to /sbin/zpool is required.
+32 04 * * 6 /sbin/zpool scrub banana
+
